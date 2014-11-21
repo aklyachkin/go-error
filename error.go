@@ -1,6 +1,7 @@
 package error
 
 import (
+    "fmt"
     "runtime"
     "strconv"
 )
@@ -12,6 +13,7 @@ type TError struct {
     file string
     line int
     Params []string
+    Parent error
 }
 
 const (
@@ -39,16 +41,30 @@ func (e TError) Error() string {
     return s
 }
 
-func (e *TError) Raise(debug bool, params ...string) TError {
+func Backtrace(err error) {
+    if err == nil {
+        return
+    }
+    fmt.Println(err.Error())
+    switch err.(type) {
+    case TError:
+        e1 := err.(TError)
+        Backtrace(e1.Parent)
+    }
+}
+
+func (e *TError) Raise(debug bool, parent error, params ...string) TError {
+    e1 := *e
     if debug {
         _, f, l, ok := runtime.Caller(1)
         if ok {
-            e.file = f
-            e.line = l
+            e1.file = f
+            e1.line = l
         }
     }
-    e.Params = append(e.Params, params...)
-    return *e
+    e1.Params = append(e1.Params, params...)
+    e1.Parent = parent
+    return e1
 }
 
 func New(sev, code int, msg string) TError {
