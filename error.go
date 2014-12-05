@@ -12,7 +12,7 @@ type TError struct {
     msg string
     file string
     line int
-    Params []string
+    Params []interface{}
     Parent error
 }
 
@@ -36,7 +36,7 @@ func (e TError) Error() string {
         s = s + " in " + e.file + ":" + strconv.Itoa(e.line)
     }
     for _, v := range e.Params {
-        s = s + " " + v
+        s = s + " " + fmt.Sprintf("%v", v)
     }
     return s
 }
@@ -53,7 +53,7 @@ func Backtrace(err error) {
     }
 }
 
-func (e *TError) Raise(debug bool, parent error, params ...string) TError {
+func (e *TError) Raise(debug bool, parent error, params ...interface{}) TError {
     e1 := *e
     if debug {
         _, f, l, ok := runtime.Caller(1)
